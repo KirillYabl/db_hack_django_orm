@@ -38,17 +38,17 @@ COMMENDATIONS = [
 
 
 def find_schoolkid(schoolkid_name):
-    """Найти ученика по части полного имени."""
+    """Find a schoolkid by the full name."""
     try:
         return Schoolkid.objects.get(full_name__contains=schoolkid_name)
     except Schoolkid.MultipleObjectsReturned:
-        print(f'Найдено больше одного ученика с именем {schoolkid_name}')
+        print(f'More than one schoolkid found with name {schoolkid_name}')
     except ObjectDoesNotExist:
-        print(F'Не найдено учеников с именем {schoolkid_name}')
+        print(f'No schoolkids found with the name {schoolkid_name}')
 
 
 def fix_marks(schoolkid):
-    """Исправить оценку конкретному ученику."""
+    """Correct the grade for a particular schoolkid."""
     schoolkid_bad_marks = Mark.objects.filter(schoolkid=schoolkid, points__in=[2, 3])
 
     for mark in schoolkid_bad_marks:
@@ -57,13 +57,13 @@ def fix_marks(schoolkid):
 
 
 def remove_chastisements(schoolkid):
-    """Удалить все замечания от учителей."""
+    """Remove all chastisements from teachers."""
     schoolkid_chastisements = Chastisement.objects.filter(schoolkid=schoolkid)
     schoolkid_chastisements.delete()
 
 
 def create_commendation(schoolkid_name, subject_name):
-    """Создать запись с похвалой по определенному предмету ученику."""
+    """Create a record with commendation for a specific subject to the schoolkid."""
     schoolkid = find_schoolkid(schoolkid_name=schoolkid_name)
     subject = Subject.objects.get(title=subject_name, year_of_study=schoolkid.year_of_study)
     lessons = Lesson.objects.filter(year_of_study=schoolkid.year_of_study,
