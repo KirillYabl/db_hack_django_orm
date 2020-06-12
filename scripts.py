@@ -1,5 +1,5 @@
-from manage import Schoolkid, Subject, Lesson, Mark, Chastisement, Commendation
-from django.core.exceptions import ObjectDoesNotExist
+from datacenter.models import Schoolkid, Subject, Lesson, Mark, Chastisement, Commendation
+from django.http import Http404
 
 import random
 
@@ -42,9 +42,9 @@ def find_schoolkid(schoolkid_name):
     try:
         return Schoolkid.objects.get(full_name__contains=schoolkid_name)
     except Schoolkid.MultipleObjectsReturned:
-        print(f'More than one schoolkid found with name {schoolkid_name}')
-    except ObjectDoesNotExist:
-        print(f'No schoolkids found with the name {schoolkid_name}')
+        raise Http404(f'More than one schoolkid found with name {schoolkid_name}')
+    except Schoolkid.DoesNotExist:
+        raise Http404(f'No schoolkids found with the name {schoolkid_name}')
 
 
 def fix_marks(schoolkid):
@@ -63,13 +63,21 @@ def remove_chastisements(schoolkid):
 
 
 def create_commendation(schoolkid_name, subject_name):
-    """Create a record with commendation for a specific subject to the schoolkid."""
+    """Create a record with commendation for a specific subject to the schoolkid.
+
+    This function uses ".order_by('?').first()" to get a random record.
+    In this case, this is normal, because schoolkids haven few lessons.
+    Using ".values_list('pk)" and ".get(pk=pk)" showed a decrease in performance.
+    """
     schoolkid = find_schoolkid(schoolkid_name=schoolkid_name)
-    subject = Subject.objects.get(title=subject_name, year_of_study=schoolkid.year_of_study)
-    lessons = Lesson.objects.filter(year_of_study=schoolkid.year_of_study,
-                                    group_letter=schoolkid.group_letter,
-                                    subject=subject)
-    good_lesson = random.choice(lessons)
+    try:
+        subject = Subject.objects.get(title=subject_name, year_of_study=schoolkid.year_of_study)
+    except Subject.DoesNotExist:
+        raise Http404(f'No subjects found with the name {subject_name}')
+    good_lesson = Lesson.objects.filter(year_of_study=schoolkid.year_of_study,
+                                        group_letter=schoolkid.group_letter,
+                                        subject=subject) \
+        .order_by('?').first()
     commendation = random.choice(COMMENDATIONS)
     Commendation.objects.create(text=commendation,
                                 created=good_lesson.date,
