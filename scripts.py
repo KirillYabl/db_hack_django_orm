@@ -1,5 +1,4 @@
 from datacenter.models import Schoolkid, Subject, Lesson, Mark, Chastisement, Commendation
-from django.http import Http404
 
 import random
 
@@ -42,9 +41,9 @@ def find_schoolkid(schoolkid_name):
     try:
         return Schoolkid.objects.get(full_name__contains=schoolkid_name)
     except Schoolkid.MultipleObjectsReturned:
-        raise Http404(f'More than one schoolkid found with name {schoolkid_name}')
+        raise ValueError(f'More than one schoolkid found with name {schoolkid_name}')
     except Schoolkid.DoesNotExist:
-        raise Http404(f'No schoolkids found with the name {schoolkid_name}')
+        raise ValueError(f'No schoolkids found with the name {schoolkid_name}')
 
 
 def fix_marks(schoolkid):
@@ -73,7 +72,8 @@ def create_commendation(schoolkid_name, subject_name):
     try:
         subject = Subject.objects.get(title=subject_name, year_of_study=schoolkid.year_of_study)
     except Subject.DoesNotExist:
-        raise Http404(f'No subjects found with the name {subject_name}')
+        # ValueError, since the user should remain in the shell
+        raise ValueError(f'No subjects found with the name {subject_name}')
     good_lesson = Lesson.objects.filter(year_of_study=schoolkid.year_of_study,
                                         group_letter=schoolkid.group_letter,
                                         subject=subject) \
